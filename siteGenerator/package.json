@@ -1,0 +1,22 @@
+{
+  "name": "site-generator",
+  "version": "1.0.0",
+  "description": "A static site generator that generate sites out of the date from a headless cms with handlebars",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git2.micromata.de/users/abestvater/repos/headlesscms-wp-poc"
+  },
+  "author": "Andy Bestvater",
+  "license": "MIT",
+  "dependencies": {
+    "fs-promise": "^2.0.0",
+    "request": "^2.80.0"
+  },
+  "devDependencies": {
+    "handlebars": "^4.0.6"
+  }
+}

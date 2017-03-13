@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "A server to run an App on incoming request from a Wordpress backend",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git2.micromata.de/users/abestvater/repos/headlesscms-wp-poc"
+  },
+  "author": "Andy Bestvater",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}

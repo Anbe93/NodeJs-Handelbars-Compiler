@@ -1,0 +1,7 @@
+<ul>
+	{{#each @root.data}}
+		{{#each this.data}}		
+		<li><a href="joboffer_{{filename this.title.rendered}}.html">{{this.title.rendered}}</a></li>
+		{{/each}}
+	{{/each}}
+</ul>
