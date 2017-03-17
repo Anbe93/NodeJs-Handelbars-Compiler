@@ -21,9 +21,9 @@ const startJoboffersGenerator = () => {
 		
 		try {
 
-			const oldHtmlFiles = await fsPromise.readdir('../handlebarsTest/dist/');
+			const oldHtmlFiles = await fsPromise.readdir('../../twentySixteenClone/dist/');
 			oldHtmlFiles.filter(name => /\.html$/gmi.test(name)).forEach(file => {
-				fsPromise.unlink(`../handlebarsTest/dist/${file}`);
+				fsPromise.unlink(`../../twentySixteenClone/dist/${file}`);
 			});
 
 		} catch (error) {
@@ -34,9 +34,9 @@ const startJoboffersGenerator = () => {
 	const readPartials = async () => {
 		const objectOfAllPartials = {}
 		
-		const partialsDir = await fsPromise.readdir('../handlebarsTest/partials/');
+		const partialsDir = await fsPromise.readdir('../../twentySixteenClone/partials/');
 		await Promise.all(partialsDir.map(async partialFileName => {
-			const source = await fsPromise.readFile(`../handlebarsTest/partials/${partialFileName}`, 'utf8');
+			const source = await fsPromise.readFile(`../../twentySixteenClone/partials/${partialFileName}`, 'utf8');
 			objectOfAllPartials[partialFileName.split('.')[0]] = source;
 		}));
 
@@ -51,23 +51,33 @@ const startJoboffersGenerator = () => {
 		Handlebars.registerHelper('filename', function (input) {
 			return input.replace(/ /g, '_');
 		});
+
+		Handlebars.registerHelper('renderDate', function (input) {
+			let date = (input.split('T')[0]).split('-');
+			let month = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+			date[2] = date[2].replace(/^0/gm, '');
+			date[1] = date[1].replace(/^0/gm, '');			
+
+			return `${date[2]}. ${month[date[1]-1]} ${date[0]}`;
+
+		});
 	}
 
 	const buildHandlebars = async (data) => {
 		
 		Object.entries(await readPartials()).map(([key, value]) => Handlebars.registerPartial(key, value));
 		await readHelpers();
-		const wrapperTemplateSource = await fsPromise.readFile('../handlebarsTest/template/template.hbs', 'utf8');		
+		const wrapperTemplateSource = await fsPromise.readFile('../../twentySixteenClone/template/template.hbs', 'utf8');		
 		const template = Handlebars.compile(wrapperTemplateSource);
 		
 
 		try {
 			
-			const templateFiles = await fsPromise.readdir('../handlebarsTest/');
+			const templateFiles = await fsPromise.readdir('../../twentySixteenClone/');
 			
 			await Promise.all(templateFiles.filter(file => /\.hbs$/mgi.test(file)).map(async templates => {
 
-				const templateSource = await fsPromise.readFile(`../handlebarsTest/${templates}`, 'utf8');
+				const templateSource = await fsPromise.readFile(`../../twentySixteenClone/${templates}`, 'utf8');
 				const bodyHtml = Handlebars.compile(templateSource);
 				const context = { body: bodyHtml, data: data}
 				
@@ -78,12 +88,12 @@ const startJoboffersGenerator = () => {
 						Handlebars.registerPartial('content', e.content.rendered);
 
 						const html = template(context);
-						await fsPromise.writeFile(`../handlebarsTest/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
+						await fsPromise.writeFile(`../../twentySixteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
 					}));
 
 				} else {
 					const html = template(context);
-					await fsPromise.writeFile(`../handlebarsTest/dist/${templates.split('.')[0]}.html`, html, 'utf8');
+					await fsPromise.writeFile(`../../twentySixteenClone/dist/${templates.split('.')[0]}.html`, html, 'utf8');
 				}
 			}));
 
@@ -103,6 +113,6 @@ const startJoboffersGenerator = () => {
 	}
 }
 
-module.exports = startJoboffersGenerator;
-
 startJoboffersGenerator();
+
+module.exports = startJoboffersGenerator;
