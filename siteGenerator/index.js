@@ -1,6 +1,7 @@
 'use strict';
 
 const request = require("request");
+const requestPromise = require("request-promise");
 const fsPromise = require('fs-promise');
 const Handlebars = require('handlebars');
 
@@ -63,13 +64,18 @@ const startJoboffersGenerator = () => {
 		});
 	}
 
+	const getAuthor = async (post) => {
+		const body = await requestPromise(`http://localhost:8888/wordpress/wp-json/wp/v2/users/${post.author}`);
+		console.log('lade Author Partial');
+		return JSON.parse(body).name;
+	}
+
 	const buildHandlebars = async (data) => {
 		
 		Object.entries(await readPartials()).map(([key, value]) => Handlebars.registerPartial(key, value));
 		await readHelpers();
 		const wrapperTemplateSource = await fsPromise.readFile('../../twentySixteenClone/template/template.hbs', 'utf8');		
 		const template = Handlebars.compile(wrapperTemplateSource);
-		
 
 		try {
 			
@@ -81,11 +87,15 @@ const startJoboffersGenerator = () => {
 				const bodyHtml = Handlebars.compile(templateSource);
 				const context = { body: bodyHtml, data: data}
 				
-				if(templates === 'joboffer.hbs')
+				if (templates === 'joboffer.hbs')
 				{
 					await Promise.all(data.map(async e => {
+						
+						console.log('überschreibe Partials für:     ', e.title.rendered);
+						
 						Handlebars.registerPartial('headline', e.title.rendered);
 						Handlebars.registerPartial('content', e.content.rendered);
+						Handlebars.registerPartial('author', await getAuthor(e));
 
 						const html = template(context);
 						await fsPromise.writeFile(`../../twentySixteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
