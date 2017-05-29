@@ -5,7 +5,7 @@ const requestPromise = require("request-promise");
 const fsPromise = require('fs-promise');
 const Handlebars = require('handlebars');
 
-const url = "http://localhost:8888/wordpress/wp-json/wp/v2/posts?categories=2"
+const url = "http://localhost/wp-poc/wp-json/wp/v2/posts?categories=2"
 
 const startJoboffersGenerator = () => {
 	request(url, function (error, response, body) {
@@ -22,9 +22,9 @@ const startJoboffersGenerator = () => {
 		
 		try {
 
-			const oldHtmlFiles = await fsPromise.readdir('../../twentySixteenClone/dist/');
+			const oldHtmlFiles = await fsPromise.readdir('../../twentyFifteenClone/dist/');
 			oldHtmlFiles.filter(name => /\.html$/gmi.test(name)).forEach(file => {
-				fsPromise.unlink(`../../twentySixteenClone/dist/${file}`);
+				fsPromise.unlink(`../../twentyFifteenClone/dist/${file}`);
 			});
 
 		} catch (error) {
@@ -35,9 +35,9 @@ const startJoboffersGenerator = () => {
 	const readPartials = async () => {
 		const objectOfAllPartials = {}
 		
-		const partialsDir = await fsPromise.readdir('../../twentySixteenClone/partials/');
+		const partialsDir = await fsPromise.readdir('../../twentyFifteenClone/partials/');
 		await Promise.all(partialsDir.map(async partialFileName => {
-			const source = await fsPromise.readFile(`../../twentySixteenClone/partials/${partialFileName}`, 'utf8');
+			const source = await fsPromise.readFile(`../../twentyFifteenClone/partials/${partialFileName}`, 'utf8');
 			objectOfAllPartials[partialFileName.split('.')[0]] = source;
 		}));
 
@@ -65,7 +65,7 @@ const startJoboffersGenerator = () => {
 	}
 
 	const getAuthor = async (post) => {
-		const body = await requestPromise(`http://localhost:8888/wordpress/wp-json/wp/v2/users/${post.author}`);
+		const body = await requestPromise(`http://localhost/wp-poc/wp-json/wp/v2/users/${post.author}`);
 		console.log('lade Author Partial');
 		return JSON.parse(body).name;
 	}
@@ -74,36 +74,37 @@ const startJoboffersGenerator = () => {
 		
 		Object.entries(await readPartials()).map(([key, value]) => Handlebars.registerPartial(key, value));
 		await readHelpers();
-		const wrapperTemplateSource = await fsPromise.readFile('../../twentySixteenClone/template/template.hbs', 'utf8');		
+		const wrapperTemplateSource = await fsPromise.readFile('../../twentyFifteenClone/template/template.hbs', 'utf8');		
 		const template = Handlebars.compile(wrapperTemplateSource);
 
 		try {
 			
-			const templateFiles = await fsPromise.readdir('../../twentySixteenClone/');
+			const templateFiles = await fsPromise.readdir('../../twentyFifteenClone/');
 			
 			await Promise.all(templateFiles.filter(file => /\.hbs$/mgi.test(file)).map(async templates => {
 
-				const templateSource = await fsPromise.readFile(`../../twentySixteenClone/${templates}`, 'utf8');
+				const templateSource = await fsPromise.readFile(`../../twentyFifteenClone/${templates}`, 'utf8');
 				const bodyHtml = Handlebars.compile(templateSource);
 				const context = { body: bodyHtml, data: data}
 				
 				if (templates === 'joboffer.hbs')
 				{
-					await Promise.all(data.map(async e => {
-						
+					debugger;
+					for (let e of data) {
+						debugger;
 						console.log('überschreibe Partials für:     ', e.title.rendered);
 						
 						Handlebars.registerPartial('headline', e.title.rendered);
 						Handlebars.registerPartial('content', e.content.rendered);
 						Handlebars.registerPartial('author', await getAuthor(e));
-
+						debugger;
 						const html = template(context);
-						await fsPromise.writeFile(`../../twentySixteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
-					}));
+						await fsPromise.writeFile(`../../twentyFifteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
+					}
 
 				} else {
 					const html = template(context);
-					await fsPromise.writeFile(`../../twentySixteenClone/dist/${templates.split('.')[0]}.html`, html, 'utf8');
+					await fsPromise.writeFile(`../../twentyFifteenClone/dist/${templates.split('.')[0]}.html`, html, 'utf8');
 				}
 			}));
 

@@ -14,7 +14,8 @@
   "license": "MIT",
   "dependencies": {
     "fs-promise": "^2.0.0",
-    "request": "^2.80.0"
+    "request": "^2.80.0",
+    "request-promise": "^4.2.0"
   },
   "devDependencies": {
     "handlebars": "^4.0.6"
