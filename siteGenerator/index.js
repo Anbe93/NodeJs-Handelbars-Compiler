@@ -13,7 +13,7 @@ const startJoboffersGenerator = () => {
 			handleJoboffersContent(JSON.parse(body));
 		}
 		else{
-			console.log('error: ' + error);
+			console.log('ERROR: ' + error);
 			console.log('STATUS: ' + response.statusCode);
 		}
 	});
@@ -33,15 +33,13 @@ const startJoboffersGenerator = () => {
 	}
 
 	const readPartials = async () => {
-		const objectOfAllPartials = {}
 		
 		const partialsDir = await fsPromise.readdir('../../twentyFifteenClone/partials/');
-		await Promise.all(partialsDir.map(async partialFileName => {
+		partialsDir.map(async partialFileName => {
 			const source = await fsPromise.readFile(`../../twentyFifteenClone/partials/${partialFileName}`, 'utf8');
-			objectOfAllPartials[partialFileName.split('.')[0]] = source;
-		}));
+			Handlebars.registerPartial(partialFileName.split('.')[0], source)
+		});
 
-		return objectOfAllPartials;
 	}
 
 	const readHelpers = () => {
@@ -72,7 +70,7 @@ const startJoboffersGenerator = () => {
 
 	const buildHandlebars = async (data) => {
 		
-		Object.entries(await readPartials()).map(([key, value]) => Handlebars.registerPartial(key, value));
+		await readPartials();
 		await readHelpers();
 		const wrapperTemplateSource = await fsPromise.readFile('../../twentyFifteenClone/template/template.hbs', 'utf8');		
 		const template = Handlebars.compile(wrapperTemplateSource);
@@ -89,15 +87,12 @@ const startJoboffersGenerator = () => {
 				
 				if (templates === 'joboffer.hbs')
 				{
-					debugger;
 					for (let e of data) {
-						debugger;
 						console.log('überschreibe Partials für:     ', e.title.rendered);
 						
 						Handlebars.registerPartial('headline', e.title.rendered);
 						Handlebars.registerPartial('content', e.content.rendered);
 						Handlebars.registerPartial('author', await getAuthor(e));
-						debugger;
 						const html = template(context);
 						await fsPromise.writeFile(`../../twentyFifteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
 					}
