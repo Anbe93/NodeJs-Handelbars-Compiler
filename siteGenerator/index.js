@@ -2,7 +2,7 @@
 
 const request = require("request");
 const requestPromise = require("request-promise");
-const fsPromise = require('fs-promise');
+const fsExtra = require('fs-extra');
 const Handlebars = require('handlebars');
 
 const url = "http://localhost/wp-poc/wp-json/wp/v2/posts?categories=2"
@@ -22,9 +22,9 @@ const startJoboffersGenerator = () => {
 		
 		try {
 
-			const oldHtmlFiles = await fsPromise.readdir('../../twentyFifteenClone/dist/');
+			const oldHtmlFiles = await fsExtra.readdir('../../twentyFifteenClone/dist/');
 			oldHtmlFiles.filter(name => /\.html$/gmi.test(name)).forEach(file => {
-				fsPromise.unlink(`../../twentyFifteenClone/dist/${file}`);
+				fsExtra.unlink(`../../twentyFifteenClone/dist/${file}`);
 			});
 
 		} catch (error) {
@@ -32,17 +32,15 @@ const startJoboffersGenerator = () => {
 		}
 	}
 
-	const readPartials = async () => {
-		
-		const partialsDir = await fsPromise.readdir('../../twentyFifteenClone/partials/');
-		partialsDir.map(async partialFileName => {
-			const source = await fsPromise.readFile(`../../twentyFifteenClone/partials/${partialFileName}`, 'utf8');
-			Handlebars.registerPartial(partialFileName.split('.')[0], source)
+	const registerPartials = async () => {
+		const partialsFiles = await fsExtra.readdir('../../twentyFifteenClone/partials/');
+		partialsFiles.map(async partialFileName => {
+			const source = await fsExtra.readFile(`../../twentyFifteenClone/partials/${partialFileName}`, 'utf8');
+			Handlebars.registerPartial(partialFileName.split('.')[0], source);
 		});
-
 	}
 
-	const readHelpers = () => {
+	const registerHelpers = () => {
 		Handlebars.registerHelper('renderJSON', function (input) {
 			return `<pre><code>${JSON.stringify(input, false, 2)} </code></pre>`;
 		});
@@ -70,44 +68,37 @@ const startJoboffersGenerator = () => {
 
 	const buildHandlebars = async (data) => {
 		
-		await readPartials();
-		await readHelpers();
-		const wrapperTemplateSource = await fsPromise.readFile('../../twentyFifteenClone/template/template.hbs', 'utf8');		
-		const template = Handlebars.compile(wrapperTemplateSource);
+		await registerPartials();
+		await registerHelpers();
 
 		try {
+			const wrapperTemplate = Handlebars.compile(await fsExtra.readFile('../../twentyFifteenClone/template/template.hbs', 'utf8'));
+			const templateFiles = await fsExtra.readdir('../../twentyFifteenClone/');
 			
-			const templateFiles = await fsPromise.readdir('../../twentyFifteenClone/');
-			
-			await Promise.all(templateFiles.filter(file => /\.hbs$/mgi.test(file)).map(async templates => {
-
-				const templateSource = await fsPromise.readFile(`../../twentyFifteenClone/${templates}`, 'utf8');
-				const bodyHtml = Handlebars.compile(templateSource);
-				const context = { body: bodyHtml, data: data}
+			await Promise.all(templateFiles.filter(templateFile => /\.hbs$/mgi.test(templateFile)).map(async template => {
+				const templateSource = await fsExtra.readFile(`../../twentyFifteenClone/${template}`, 'utf8');
+				const htmlBody = Handlebars.compile(templateSource);
+				const context = { body: htmlBody, data: data}
 				
-				if (templates === 'joboffer.hbs')
+				if (template === 'joboffer.hbs')
 				{
 					for (let e of data) {
 						console.log('überschreibe Partials für:     ', e.title.rendered);
-						
 						Handlebars.registerPartial('headline', e.title.rendered);
 						Handlebars.registerPartial('content', e.content.rendered);
 						Handlebars.registerPartial('author', await getAuthor(e));
-						const html = template(context);
-						await fsPromise.writeFile(`../../twentyFifteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
+						const html = wrapperTemplate(context);
+						await fsExtra.writeFile(`../../twentyFifteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
 					}
-
 				} else {
-					const html = template(context);
-					await fsPromise.writeFile(`../../twentyFifteenClone/dist/${templates.split('.')[0]}.html`, html, 'utf8');
+					const html = wrapperTemplate(context);
+					await fsExtra.writeFile(`../../twentyFifteenClone/dist/${template.split('.')[0]}.html`, html, 'utf8');
 				}
 			}));
-
 			console.log(`
 					\n------------------------------------
 					\n-> -> -> The build is ready <- <- <-
 					\n------------------------------------`);
-					
 		} catch (error) {
 			console.log(error);
 		}
