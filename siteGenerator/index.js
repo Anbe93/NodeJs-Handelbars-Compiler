@@ -19,14 +19,11 @@ const startJoboffersGenerator = () => {
 	});
 
 	const clearDist = async () => {
-		
 		try {
-
 			const oldHtmlFiles = await fsExtra.readdir('../../twentyFifteenClone/dist/');
 			oldHtmlFiles.filter(name => /\.html$/gmi.test(name)).forEach(file => {
 				fsExtra.unlink(`../../twentyFifteenClone/dist/${file}`);
 			});
-
 		} catch (error) {
 			console.log(error);
 		}
@@ -80,13 +77,13 @@ const startJoboffersGenerator = () => {
 				const htmlBody = Handlebars.compile(templateSource);
 				const context = { body: htmlBody, data: data}
 				
-				if (template === 'joboffer.hbs')
-				{
+				if (template === 'joboffer.hbs') {
 					for (let e of data) {
 						console.log('überschreibe Partials für:     ', e.title.rendered);
 						Handlebars.registerPartial('headline', e.title.rendered);
 						Handlebars.registerPartial('content', e.content.rendered);
 						Handlebars.registerPartial('author', await getAuthor(e));
+
 						const html = wrapperTemplate(context);
 						await fsExtra.writeFile(`../../twentyFifteenClone/dist/joboffer_${e.title.rendered.replace(/ /g, '_')}.html`, html, 'utf8');
 					}
@@ -109,7 +106,5 @@ const startJoboffersGenerator = () => {
 		await buildHandlebars(data);
 	}
 }
-
-startJoboffersGenerator();
 
 module.exports = startJoboffersGenerator;

@@ -14,6 +14,8 @@
   "author": "Andy Bestvater",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.15.2"
+    "express": "^4.15.2",
+    "ftp": "^0.3.10",
+    "ftps": "^1.1.0"
   }
 }
