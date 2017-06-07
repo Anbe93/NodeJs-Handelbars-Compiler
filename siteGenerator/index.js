@@ -5,12 +5,14 @@ const requestPromise = require("request-promise");
 const fsExtra = require('fs-extra');
 const Handlebars = require('handlebars');
 
-const url = "http://localhost/wp-poc/wp-json/wp/v2/posts?categories=2"
+const ApiPort = 80;
 
-const startJoboffersGenerator = () => {
+const url = `http://localhost:${ApiPort}/wp-poc/wp-json/wp/v2/posts?categories=2`
+
+const startJoboffersGenerator = (callback) => {
 	request(url, function (error, response, body) {
 		if (!error && response.statusCode === 200) {
-			handleJoboffersContent(JSON.parse(body));
+			handleJoboffersContent(JSON.parse(body), callback);
 		}
 		else{
 			console.log('ERROR: ' + error);
@@ -50,21 +52,18 @@ const startJoboffersGenerator = () => {
 			let date = (input.split('T')[0]).split('-');
 			let month = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 			date[2] = date[2].replace(/^0/gm, '');
-			date[1] = date[1].replace(/^0/gm, '');			
-
+			date[1] = date[1].replace(/^0/gm, '');
 			return `${date[2]}. ${month[date[1]-1]} ${date[0]}`;
-
 		});
 	}
 
 	const getAuthor = async (post) => {
-		const body = await requestPromise(`http://localhost/wp-poc/wp-json/wp/v2/users/${post.author}`);
+		const body = await requestPromise(`http://localhost:${ApiPort}/wp-poc/wp-json/wp/v2/users/${post.author}`);
 		console.log('lade Author Partial');
 		return JSON.parse(body).name;
 	}
 
 	const buildHandlebars = async (data) => {
-		
 		await registerPartials();
 		await registerHelpers();
 
@@ -101,9 +100,10 @@ const startJoboffersGenerator = () => {
 		}
 	}
 
-	const handleJoboffersContent = async data => {
+	const handleJoboffersContent = async (data, callback) => {
 		await clearDist();
 		await buildHandlebars(data);
+		callback();
 	}
 }
 

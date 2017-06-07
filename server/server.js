@@ -7,20 +7,7 @@ const fs = require('fs');
 
 let app = express();
 
-app.listen(8080, () => {
-	console.log('Listening on localhost:8080');
-});
-
-app.post('/', (req, res) => {
-	startJoboffersGenerator();
-	ftp.mirror({
-		remoteDir: './static',
-		localDir: '../../twentyFifteenClone/dist',
-		parallel: true,
-		upload: true
-	}).exec(console.log);
-});
-
+// ftp config
 const ftp = new Client({
 	host: 'ftp.andy-katharina.de',
 	port: 21,
@@ -29,33 +16,43 @@ const ftp = new Client({
 	protocol: 'ftp'
 });
 
+// sftp config
+/*const ftp = new Client({
+	host: 'home679493733.1and1-data.host',
+	port: 22,
+	username: 'u89121212',
+	password: '025689ab',
+	protocol: 'sftp'
+});*/
 
+app.listen(8080, () => {
+	console.log('Listening on localhost:8080');
+});
 
+// Gate to prevent the first of two simular posts
+let gate = false;
 
-// ftp.put('./foo.txt', ['./foo.txt']).exec(console.log);
+app.post('/', (req, res) => {
+	console.log('New Post - Gate is: ' + gate);
+	if (gate) {
+		new Promise(async (resolve) => {
+			startJoboffersGenerator(callback => {
+				resolve();
+			});
+			
+		}).then( () => {
+			ftp.mirror({
+				remoteDir: './static',
+				localDir: '../../twentyFifteenClone/dist',
+				parallel: true,
+				upload: true
+			}).exec(console.log);
 
-// let ftpserver = {
-// 	host: 'home679493733.1and1-data.host',
-// 	port: 22,
-// 	user: 'u89121212',
-// 	password: '025689ab',
-// 	secure: true,
-// 	secureOptions: { rejectUnauthorized: false }
-// };
-
-// console.log('befor client');	
-// const ftp =  new Client();
-// console.log('after client - befor ready');
-// ftp.on('greeting', function() {
-// 	console.log('in ready');
-// 	ftp.put('foo.txt', 'foo.remote-copy.txt', function(err) {
-// 		console.log('in the middle');
-// 		if (err) {console.log(err);}
-// 		else {console.log('works');}
-// 		ftp.end();
-// 		console.log('after end');
-// 	});
-// });
-// // connect to localhost:21 as anonymous
-// 	ftp.connect(ftpserver);
-// console.log('real end');
+			gate = !gate;
+			console.log('Changed gate to: ' + gate);
+		})
+	} else {
+		gate = !gate;
+		console.log('Changed gate to: ' + gate);
+	}
+});
