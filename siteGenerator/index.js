@@ -1,7 +1,6 @@
 'use strict';
 
-const request = require("request");
-const requestPromise = require("request-promise");
+const request = require("request-promise");
 const fsExtra = require('fs-extra');
 const Handlebars = require('handlebars');
 
@@ -10,15 +9,14 @@ const ApiPort = 80;
 const url = `http://localhost:${ApiPort}/wp-poc/wp-json/wp/v2/posts?categories=2`
 
 const startJoboffersGenerator = (callback) => {
-	request(url, function (error, response, body) {
-		if (!error && response.statusCode === 200) {
+	request(url)
+		.then(function (response, body) {
 			handleJoboffersContent(JSON.parse(body), callback);
-		}
-		else{
+		})
+		.catch(function (error) {
 			console.log('ERROR: ' + error);
 			console.log('STATUS: ' + response.statusCode);
-		}
-	});
+		});
 
 	const clearDist = async () => {
 		try {
@@ -58,7 +56,7 @@ const startJoboffersGenerator = (callback) => {
 	}
 
 	const getAuthor = async (post) => {
-		const body = await requestPromise(`http://localhost:${ApiPort}/wp-poc/wp-json/wp/v2/users/${post.author}`);
+		const body = await request(`http://localhost:${ApiPort}/wp-poc/wp-json/wp/v2/users/${post.author}`);
 		console.log('lade Author Partial');
 		return JSON.parse(body).name;
 	}
