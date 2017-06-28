@@ -3,7 +3,6 @@
 const startJoboffersGenerator = require('../siteGenerator/index.js');
 const express = require('express');
 const Client = require('ftps');
-const fs = require('fs');
 
 let app = express();
 
@@ -30,12 +29,14 @@ app.listen(8080, () => {
 });
 
 // Gate to prevent the first of two simular posts
-let gate = false;
+let isAllowedToGenerate = false;
 
 app.post('/', (req, res) => {
-	console.log('New Post - Gate is: ' + gate);
-	if (gate) {
-		new Promise(async (resolve) => {
+	
+	console.log('-------------POST-------------');
+	console.log('New Post - Gate is: ' + isAllowedToGenerate);
+	if (isAllowedToGenerate) {
+		new Promise((resolve) => {
 			startJoboffersGenerator(callback => {
 				resolve();
 			});
@@ -48,11 +49,11 @@ app.post('/', (req, res) => {
 				upload: true
 			}).exec(console.log);
 
-			gate = !gate;
-			console.log('Changed gate to: ' + gate);
+			isAllowedToGenerate = !isAllowedToGenerate;
+			console.log('Changed isAllowedToGenerate to: ' + isAllowedToGenerate);
 		})
 	} else {
-		gate = !gate;
-		console.log('Changed gate to: ' + gate);
+		isAllowedToGenerate = !isAllowedToGenerate;
+		console.log('Changed isAllowedToGenerate to: ' + isAllowedToGenerate);
 	}
 });
