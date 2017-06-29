@@ -101,7 +101,7 @@ const startJoboffersGenerator = (callback) => {
 	const handleJoboffersContent = async (data, callback) => {
 		await clearDist();
 		await buildHandlebars(data);
-		callback();
+		if (typeof callback === "function") callback();
 	}
 }
 
